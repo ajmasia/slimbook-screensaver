@@ -28,8 +28,6 @@ exit_screensaver() {
 
 trap exit_screensaver SIGINT SIGTERM SIGHUP SIGQUIT
 
-log "Screensaver started"
-
 # Set background to black and hide cursor
 printf '\033]11;rgb:00/00/00\007'
 printf '\033[?25l'

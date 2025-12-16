@@ -36,13 +36,11 @@ fi
 
 # Exit if screensaver is already running (check for terminal with our class)
 if pgrep -f "class.*slimbook.screensaver" >/dev/null; then
-    log "Screensaver already running, skipping"
     exit 0
 fi
 
 # Check if screensaver is disabled (unless forced)
 if [[ -f "$STATE_FILE" ]] && [[ "$1" != "-f" ]] && [[ "$1" != "--force" ]]; then
-    log "Screensaver disabled, skipping"
     exit 1
 fi
 
