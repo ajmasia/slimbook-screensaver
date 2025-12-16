@@ -1,84 +1,163 @@
 #!/bin/bash
-# Slimbook EVO screensaver installer for Debian 13 + GNOME
+# Slimbook EVO screensaver installer
+# Supports both local (cloned repo) and remote (download release) installation
 set -e
 
-echo "=== Installing Slimbook EVO Screensaver for Debian 13 + GNOME ==="
+REPO_URL="https://github.com/ajmasia/slimbook-screensaver"
+INSTALL_DIR="$HOME/.local/share/slimbook-screensaver"
+CONFIG_DIR="$HOME/.config/slimbook-screensaver"
 
-# Check system dependencies
-echo "[1/5] Checking system dependencies..."
-MISSING_PKGS=""
+# Files to install
+INSTALL_FILES=(
+    "screensaver.txt"
+    "screensaver-cmd.sh"
+    "screensaver-launch.sh"
+    "screensaver-toggle.sh"
+    "screensaver.conf"
+    "uninstall.sh"
+    "VERSION"
+)
 
-# Check Python 3.8+ is available
-if command -v python3 &>/dev/null; then
-    PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-    PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
-    PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
-    if [[ $PYTHON_MAJOR -lt 3 ]] || [[ $PYTHON_MAJOR -eq 3 && $PYTHON_MINOR -lt 8 ]]; then
-        echo "  Error: Python 3.8+ required, found $PYTHON_VERSION"
+show_help() {
+    echo "Slimbook EVO Screensaver Installer"
+    echo ""
+    echo "Usage: ./install.sh [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help     Show this help message"
+    echo "  -l, --local    Force local installation (from cloned repo)"
+    echo "  -r, --remote   Force remote installation (download release)"
+    echo ""
+    echo "Without options, the installer auto-detects the source:"
+    echo "  - If run from cloned repo: installs from local files"
+    echo "  - If run standalone: downloads latest release"
+}
+
+detect_source() {
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    # Check if we're in the repo with all required files
+    local all_files_exist=true
+    for file in "${INSTALL_FILES[@]}"; do
+        if [[ ! -f "$SCRIPT_DIR/$file" ]]; then
+            all_files_exist=false
+            break
+        fi
+    done
+
+    if [[ "$all_files_exist" == "true" ]]; then
+        echo "local"
+    else
+        echo "remote"
+    fi
+}
+
+download_release() {
+    echo "  Fetching latest release..."
+
+    # Get latest release tag
+    local latest_tag
+    latest_tag=$(curl -fsSL "https://api.github.com/repos/ajmasia/slimbook-screensaver/releases/latest" | grep '"tag_name"' | cut -d'"' -f4)
+
+    if [[ -z "$latest_tag" ]]; then
+        echo "  Error: Could not fetch latest release"
         exit 1
     fi
-    echo "  Python $PYTHON_VERSION found"
-else
-    MISSING_PKGS="$MISSING_PKGS python3-pip python3-venv"
-fi
-command -v jq &>/dev/null || MISSING_PKGS="$MISSING_PKGS jq"
 
-# Check for at least one supported terminal
-if ! command -v alacritty &>/dev/null && ! command -v gnome-terminal &>/dev/null && ! command -v ptyxis &>/dev/null; then
-    echo "  Error: No supported terminal found (alacritty, gnome-terminal, ptyxis)"
-    exit 1
-fi
+    echo "  Latest version: $latest_tag"
 
-if [[ -n "$MISSING_PKGS" ]]; then
-    echo "  Installing missing packages:$MISSING_PKGS"
-    sudo apt update
-    sudo apt install -y $MISSING_PKGS
-else
-    echo "  All dependencies installed"
-fi
+    # Create temp directory
+    TEMP_DIR=$(mktemp -d)
+    trap "rm -rf $TEMP_DIR" EXIT
 
-# Create virtual environment and install tte
-echo "[2/5] Installing Terminal Text Effects (tte)..."
-mkdir -p ~/.local/share/slimbook-screensaver
-python3 -m venv ~/.local/share/slimbook-screensaver/venv
-~/.local/share/slimbook-screensaver/venv/bin/pip install terminaltexteffects
+    # Download tarball
+    local tarball_url="${REPO_URL}/archive/refs/tags/${latest_tag}.tar.gz"
+    echo "  Downloading $tarball_url..."
+    curl -fsSL "$tarball_url" -o "$TEMP_DIR/release.tar.gz"
 
-# Create symlink for tte
-mkdir -p ~/.local/bin
-ln -sf ~/.local/share/slimbook-screensaver/venv/bin/tte ~/.local/bin/tte
+    # Extract
+    tar -xzf "$TEMP_DIR/release.tar.gz" -C "$TEMP_DIR"
 
-# Copy screensaver files
-echo "[3/5] Installing screensaver scripts..."
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_DIR="$HOME/.local/share/slimbook-screensaver"
+    # Find extracted directory (format: slimbook-screensaver-X.X.X or slimbook-screensaver-vX.X.X)
+    SOURCE_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "slimbook-screensaver-*" | head -1)
 
-cp "$SCRIPT_DIR/screensaver.txt" "$INSTALL_DIR/"
-cp "$SCRIPT_DIR/screensaver-cmd.sh" "$INSTALL_DIR/"
-cp "$SCRIPT_DIR/screensaver-launch.sh" "$INSTALL_DIR/"
-cp "$SCRIPT_DIR/screensaver-toggle.sh" "$INSTALL_DIR/"
-cp "$SCRIPT_DIR/screensaver.conf" "$INSTALL_DIR/"
-cp "$SCRIPT_DIR/uninstall.sh" "$INSTALL_DIR/"
+    if [[ -z "$SOURCE_DIR" ]]; then
+        echo "  Error: Could not find extracted files"
+        exit 1
+    fi
+}
 
-chmod +x "$INSTALL_DIR/screensaver-cmd.sh"
-chmod +x "$INSTALL_DIR/screensaver-launch.sh"
-chmod +x "$INSTALL_DIR/screensaver-toggle.sh"
-chmod +x "$INSTALL_DIR/screensaver.conf"
-chmod +x "$INSTALL_DIR/uninstall.sh"
+check_dependencies() {
+    echo "[1/5] Checking system dependencies..."
+    MISSING_PKGS=""
 
-# Create symlinks in ~/.local/bin
-ln -sf "$INSTALL_DIR/screensaver-launch.sh" ~/.local/bin/slimbook-screensaver
-ln -sf "$INSTALL_DIR/screensaver-toggle.sh" ~/.local/bin/slimbook-screensaver-toggle
-ln -sf "$INSTALL_DIR/uninstall.sh" ~/.local/bin/slimbook-screensaver-uninstall
+    # Check Python 3.8+ is available
+    if command -v python3 &>/dev/null; then
+        PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+        PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
+        PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
+        if [[ $PYTHON_MAJOR -lt 3 ]] || [[ $PYTHON_MAJOR -eq 3 && $PYTHON_MINOR -lt 8 ]]; then
+            echo "  Error: Python 3.8+ required, found $PYTHON_VERSION"
+            exit 1
+        fi
+        echo "  Python $PYTHON_VERSION found"
+    else
+        MISSING_PKGS="$MISSING_PKGS python3-pip python3-venv"
+    fi
 
-# Create default config if it doesn't exist
-echo "[4/5] Creating configuration..."
-CONFIG_DIR="$HOME/.config/slimbook-screensaver"
-CONFIG_FILE="$CONFIG_DIR/screensaver.conf"
+    command -v jq &>/dev/null || MISSING_PKGS="$MISSING_PKGS jq"
+    command -v curl &>/dev/null || MISSING_PKGS="$MISSING_PKGS curl"
 
-mkdir -p "$CONFIG_DIR"
+    # Check for at least one supported terminal
+    if ! command -v alacritty &>/dev/null && ! command -v gnome-terminal &>/dev/null && ! command -v ptyxis &>/dev/null; then
+        echo "  Error: No supported terminal found (alacritty, gnome-terminal, ptyxis)"
+        exit 1
+    fi
 
-if [[ ! -f "$CONFIG_FILE" ]]; then
-    cat > "$CONFIG_FILE" << 'CONFIG_EOF'
+    if [[ -n "$MISSING_PKGS" ]]; then
+        echo "  Installing missing packages:$MISSING_PKGS"
+        sudo apt update
+        sudo apt install -y $MISSING_PKGS
+    else
+        echo "  All dependencies installed"
+    fi
+}
+
+install_tte() {
+    echo "[2/5] Installing Terminal Text Effects (tte)..."
+    mkdir -p "$INSTALL_DIR"
+    python3 -m venv "$INSTALL_DIR/venv"
+    "$INSTALL_DIR/venv/bin/pip" install --quiet terminaltexteffects
+
+    # Create symlink for tte
+    mkdir -p ~/.local/bin
+    ln -sf "$INSTALL_DIR/venv/bin/tte" ~/.local/bin/tte
+}
+
+install_files() {
+    echo "[3/5] Installing screensaver scripts..."
+
+    for file in "${INSTALL_FILES[@]}"; do
+        cp "$SOURCE_DIR/$file" "$INSTALL_DIR/"
+    done
+
+    chmod +x "$INSTALL_DIR/screensaver-cmd.sh"
+    chmod +x "$INSTALL_DIR/screensaver-launch.sh"
+    chmod +x "$INSTALL_DIR/screensaver-toggle.sh"
+    chmod +x "$INSTALL_DIR/uninstall.sh"
+
+    # Create symlinks in ~/.local/bin
+    ln -sf "$INSTALL_DIR/screensaver-launch.sh" ~/.local/bin/slimbook-screensaver
+    ln -sf "$INSTALL_DIR/screensaver-toggle.sh" ~/.local/bin/slimbook-screensaver-toggle
+    ln -sf "$INSTALL_DIR/uninstall.sh" ~/.local/bin/slimbook-screensaver-uninstall
+}
+
+create_config() {
+    echo "[4/5] Creating configuration..."
+    mkdir -p "$CONFIG_DIR"
+
+    if [[ ! -f "$CONFIG_DIR/screensaver.conf" ]]; then
+        cat > "$CONFIG_DIR/screensaver.conf" << 'CONFIG_EOF'
 # Slimbook Screensaver Configuration
 # Edit this file to customize your screensaver
 
@@ -100,16 +179,17 @@ SLIMBOOK_SCREENSAVER_TERMINAL=alacritty
 # Font size (default: 16)
 # SLIMBOOK_SCREENSAVER_FONT_SIZE=16
 CONFIG_EOF
-    echo "  Created default config at $CONFIG_FILE"
-else
-    echo "  Config already exists at $CONFIG_FILE (preserved)"
-fi
+        echo "  Created default config at $CONFIG_DIR/screensaver.conf"
+    else
+        echo "  Config already exists at $CONFIG_DIR/screensaver.conf (preserved)"
+    fi
+}
 
-# Configure GNOME idle integration
-echo "[5/5] Configuring GNOME integration..."
+configure_gnome() {
+    echo "[5/5] Configuring GNOME integration..."
 
-# Create dbus-monitor script to detect idle state
-cat > "$INSTALL_DIR/idle-monitor.sh" << 'IDLE_EOF'
+    # Create idle monitor script
+    cat > "$INSTALL_DIR/idle-monitor.sh" << 'IDLE_EOF'
 #!/bin/bash
 # Idle monitor for GNOME - launches screensaver after inactivity
 
@@ -151,11 +231,11 @@ while true; do
 done
 IDLE_EOF
 
-chmod +x "$INSTALL_DIR/idle-monitor.sh"
+    chmod +x "$INSTALL_DIR/idle-monitor.sh"
 
-# Create autostart entry for GNOME
-mkdir -p ~/.config/autostart
-cat > ~/.config/autostart/slimbook-screensaver-monitor.desktop << EOF
+    # Create autostart entry for GNOME
+    mkdir -p ~/.config/autostart
+    cat > ~/.config/autostart/slimbook-screensaver-monitor.desktop << EOF
 [Desktop Entry]
 Type=Application
 Name=Slimbook Screensaver Monitor
@@ -165,42 +245,96 @@ Hidden=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
 EOF
+}
 
-# Check if ~/.local/bin is in PATH and add if needed
-if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+setup_path() {
+    if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+        echo ""
+        echo "Adding ~/.local/bin to PATH..."
+
+        if [[ -f "$HOME/.bashrc" ]] && ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc"; then
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+            echo "  Added to ~/.bashrc"
+        fi
+
+        if [[ -f "$HOME/.profile" ]] && ! grep -q 'PATH="$HOME/.local/bin:$PATH"' "$HOME/.profile"; then
+            echo 'PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.profile"
+            echo "  Added to ~/.profile"
+        fi
+
+        export PATH="$HOME/.local/bin:$PATH"
+    fi
+}
+
+show_complete() {
+    local version
+    version=$(cat "$INSTALL_DIR/VERSION" 2>/dev/null || echo "unknown")
+
     echo ""
-    echo "Adding ~/.local/bin to PATH..."
+    echo "=== Installation complete (v$version) ==="
+    echo ""
+    echo "Configuration: ~/.config/slimbook-screensaver/screensaver.conf"
+    echo "Logs:          ~/.local/state/slimbook-screensaver/screensaver.log"
+    echo ""
+    echo "Available commands:"
+    echo "  slimbook-screensaver           - Launch screensaver manually"
+    echo "  slimbook-screensaver-toggle    - Enable/disable screensaver"
+    echo "  slimbook-screensaver-uninstall - Uninstall screensaver"
+    echo ""
+    echo "Supported terminals: alacritty (default), gnome-terminal, ptyxis"
+    echo ""
+    echo "The screensaver will automatically activate after idle timeout."
+    echo ""
+    echo "Restart your session or run manually:"
+    echo "  $INSTALL_DIR/idle-monitor.sh &"
+}
 
-    # Add to .bashrc if it exists and doesn't already have it
-    if [[ -f "$HOME/.bashrc" ]] && ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc"; then
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
-        echo "  Added to ~/.bashrc"
-    fi
+# Parse arguments
+INSTALL_MODE=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -l|--local)
+            INSTALL_MODE="local"
+            shift
+            ;;
+        -r|--remote)
+            INSTALL_MODE="remote"
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+done
 
-    # Add to .profile if it exists and doesn't already have it
-    if [[ -f "$HOME/.profile" ]] && ! grep -q 'PATH="$HOME/.local/bin:$PATH"' "$HOME/.profile"; then
-        echo 'PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.profile"
-        echo "  Added to ~/.profile"
-    fi
+# Main installation
+echo "=== Installing Slimbook EVO Screensaver ==="
 
-    # Export for current session
-    export PATH="$HOME/.local/bin:$PATH"
+# Determine source
+if [[ -z "$INSTALL_MODE" ]]; then
+    INSTALL_MODE=$(detect_source)
 fi
 
-echo ""
-echo "=== Installation complete ==="
-echo ""
-echo "Configuration: ~/.config/slimbook-screensaver/screensaver.conf"
-echo "Logs:          ~/.local/state/slimbook-screensaver/screensaver.log"
-echo ""
-echo "Available commands:"
-echo "  slimbook-screensaver           - Launch screensaver manually"
-echo "  slimbook-screensaver-toggle    - Enable/disable screensaver"
-echo "  slimbook-screensaver-uninstall - Uninstall screensaver"
-echo ""
-echo "Supported terminals: alacritty (default), gnome-terminal, ptyxis"
-echo ""
-echo "The screensaver will automatically activate after idle timeout."
-echo ""
-echo "Restart your session or run manually:"
-echo "  $INSTALL_DIR/idle-monitor.sh &"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ "$INSTALL_MODE" == "local" ]]; then
+    echo "  Installing from local files..."
+    SOURCE_DIR="$SCRIPT_DIR"
+else
+    echo "  Installing from GitHub release..."
+    download_release
+fi
+
+check_dependencies
+install_tte
+install_files
+create_config
+configure_gnome
+setup_path
+show_complete

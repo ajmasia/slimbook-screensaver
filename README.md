@@ -21,10 +21,26 @@ A terminal-based screensaver with animated text effects, adapted from [Omarchy](
 
 ## Installation
 
+### Quick Install (from release)
+
 ```bash
-cd migrations/screensaver
-chmod +x install.sh
+curl -fsSL https://raw.githubusercontent.com/ajmasia/slimbook-screensaver/main/install.sh | bash
+```
+
+### Install from cloned repo
+
+```bash
+git clone https://github.com/ajmasia/slimbook-screensaver.git
+cd slimbook-screensaver
 ./install.sh
+```
+
+### Installer options
+
+```bash
+./install.sh --help     # Show help
+./install.sh --local    # Force local installation
+./install.sh --remote   # Force download from release
 ```
 
 ## Usage
@@ -35,6 +51,7 @@ chmod +x install.sh
 |---------|-------------|
 | `slimbook-screensaver` | Launch screensaver manually |
 | `slimbook-screensaver-toggle` | Enable/disable automatic screensaver |
+| `slimbook-screensaver-uninstall` | Uninstall screensaver |
 
 ### Exit Screensaver
 
@@ -42,17 +59,32 @@ Press any key to exit the screensaver.
 
 ## Configuration
 
-### Change Idle Timeout
-
-Edit `~/.local/share/slimbook-screensaver/idle-monitor.sh`:
+Edit `~/.config/slimbook-screensaver/screensaver.conf`:
 
 ```bash
-IDLE_TIMEOUT=150  # seconds (default: 2.5 min)
+# Terminal to use: alacritty (default), gnome-terminal, ptyxis
+SLIMBOOK_SCREENSAVER_TERMINAL=alacritty
+
+# Idle timeout in seconds (default: 120)
+SLIMBOOK_SCREENSAVER_IDLE_TIMEOUT=120
+
+# Animation frame rate (default: 60)
+SLIMBOOK_SCREENSAVER_FRAME_RATE=60
 ```
 
-### Customize Text
+### Customize ASCII Art
 
-Edit `~/.local/share/slimbook-screensaver/screensaver.txt` with your own ASCII art or text.
+Edit `~/.local/share/slimbook-screensaver/screensaver.txt` with your own ASCII art.
+
+## Uninstall
+
+```bash
+# Keep config for reinstallation
+slimbook-screensaver-uninstall
+
+# Remove everything including config and logs
+slimbook-screensaver-uninstall --all
+```
 
 ## File Structure
 
@@ -63,26 +95,20 @@ Edit `~/.local/share/slimbook-screensaver/screensaver.txt` with your own ASCII a
 ├── screensaver-launch.sh # Launcher script
 ├── screensaver-toggle.sh # Toggle on/off
 ├── idle-monitor.sh       # GNOME idle detection
+├── uninstall.sh          # Uninstaller
 └── venv/                 # Python venv with tte
 
 ~/.local/bin/
-├── tte                        # Symlink to tte binary
-├── slimbook-screensaver       # Symlink to launcher
-└── slimbook-screensaver-toggle # Symlink to toggle
+├── tte                          # Symlink to tte binary
+├── slimbook-screensaver         # Symlink to launcher
+├── slimbook-screensaver-toggle  # Symlink to toggle
+└── slimbook-screensaver-uninstall # Symlink to uninstaller
+
+~/.config/slimbook-screensaver/
+└── screensaver.conf      # User configuration
 
 ~/.config/autostart/
 └── slimbook-screensaver-monitor.desktop  # Autostart entry
-```
-
-## Uninstall
-
-```bash
-rm -rf ~/.local/share/slimbook-screensaver
-rm ~/.local/bin/slimbook-screensaver
-rm ~/.local/bin/slimbook-screensaver-toggle
-rm ~/.local/bin/tte
-rm ~/.config/autostart/slimbook-screensaver-monitor.desktop
-rm -rf ~/.local/state/slimbook-screensaver
 ```
 
 ## Dependencies
@@ -91,13 +117,14 @@ rm -rf ~/.local/state/slimbook-screensaver
 - `python3-pip`, `python3-venv` - Python package management
 - `alacritty`, `gnome-terminal`, or `ptyxis` - Terminal emulator
 - `jq` - JSON parsing
+- `curl` - For remote installation
 
 ## Acknowledgments
 
 This project is inspired by the screensaver from [Omarchy](https://github.com/basecamp/omarchy), created by David Heinemeier Hansson (DHH) and Basecamp, released under the MIT License.
 
-The original implementation was designed for Arch Linux with Hyprland. This version has been adapted and rewritten for Debian 13 + GNOME, with modifications including:
+The original implementation was designed for Arch Linux with Hyprland. This version has been adapted and rewritten for Debian/Ubuntu + GNOME, with modifications including:
 
 - GNOME Mutter D-Bus integration for idle detection (replacing hypridle)
-- Kitty terminal emulator support
+- Multiple terminal emulator support (alacritty, gnome-terminal, ptyxis)
 - Standalone installation without Omarchy dependencies
