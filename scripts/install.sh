@@ -12,6 +12,7 @@ SRC_FILES=(
     "src/screensaver-cmd.sh"
     "src/screensaver-launch.sh"
     "src/screensaver-toggle.sh"
+    "src/screensaver-update.sh"
     "src/screensaver.conf"
 )
 
@@ -140,11 +141,13 @@ install_files() {
     chmod +x "$INSTALL_DIR/screensaver-cmd.sh"
     chmod +x "$INSTALL_DIR/screensaver-launch.sh"
     chmod +x "$INSTALL_DIR/screensaver-toggle.sh"
+    chmod +x "$INSTALL_DIR/screensaver-update.sh"
     chmod +x "$INSTALL_DIR/uninstall.sh"
 
     # Create symlinks in ~/.local/bin
     ln -sf "$INSTALL_DIR/screensaver-launch.sh" ~/.local/bin/terminal-screensaver
     ln -sf "$INSTALL_DIR/screensaver-toggle.sh" ~/.local/bin/terminal-screensaver-toggle
+    ln -sf "$INSTALL_DIR/screensaver-update.sh" ~/.local/bin/terminal-screensaver-update
     ln -sf "$INSTALL_DIR/uninstall.sh" ~/.local/bin/terminal-screensaver-uninstall
 }
 

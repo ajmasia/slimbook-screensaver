@@ -73,6 +73,7 @@ rm -f ~/.config/autostart/terminal-screensaver-monitor.desktop
 echo "[3/5] Removing symlinks..."
 rm -f ~/.local/bin/terminal-screensaver
 rm -f ~/.local/bin/terminal-screensaver-toggle
+rm -f ~/.local/bin/terminal-screensaver-update
 rm -f ~/.local/bin/terminal-screensaver-uninstall
 rm -f ~/.local/bin/tte
 

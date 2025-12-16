@@ -5,6 +5,13 @@ SCREENSAVER_DIR="$HOME/.local/share/terminal-screensaver"
 TTE_BIN="$HOME/.local/bin/tte"
 STATE_FILE="$HOME/.local/state/terminal-screensaver/screensaver-off"
 
+# Show version
+if [[ "$1" == "-v" || "$1" == "--version" ]]; then
+    version=$(cat "$SCREENSAVER_DIR/VERSION" 2>/dev/null || echo "unknown")
+    echo "terminal-screensaver $version"
+    exit 0
+fi
+
 # Show help
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "Usage: terminal-screensaver [OPTION]"
@@ -14,12 +21,14 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "Options:"
     echo "  -f, --force   Launch even if screensaver is disabled"
     echo "  -h, --help    Show this help message"
+    echo "  -v, --version Show version"
     echo ""
     echo "Configuration: ~/.config/terminal-screensaver/screensaver.conf"
     echo "Logs:          ~/.local/state/terminal-screensaver/screensaver.log"
     echo ""
     echo "Related commands:"
     echo "  terminal-screensaver-toggle    Enable/disable screensaver"
+    echo "  terminal-screensaver-update    Update to latest version"
     echo "  terminal-screensaver-uninstall Uninstall screensaver"
     exit 0
 fi

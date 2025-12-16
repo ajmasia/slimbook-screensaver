@@ -69,10 +69,22 @@ toilet -f future "Your Text" > ~/.config/terminal-screensaver/screensaver.txt
 | Command | Description |
 |---------|-------------|
 | `terminal-screensaver` | Launch manually |
+| `terminal-screensaver -v` | Show version |
 | `terminal-screensaver-toggle` | Enable/disable auto-activation |
+| `terminal-screensaver-update` | Update to latest version |
 | `terminal-screensaver-uninstall` | Uninstall |
 
 Press any key to exit the screensaver.
+
+## Update
+
+Check for updates and install the latest version:
+
+```bash
+terminal-screensaver-update           # Update if new version available
+terminal-screensaver-update --check   # Check only, don't install
+terminal-screensaver-update --force   # Force reinstall current version
+```
 
 ## Dependencies
 
