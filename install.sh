@@ -4,15 +4,26 @@ set -e
 
 echo "=== Installing Slimbook EVO Screensaver for Debian 13 + GNOME ==="
 
-# Install system dependencies
-echo "[1/5] Installing system dependencies..."
-sudo apt update
-sudo apt install -y \
-    python3-pip \
-    python3-venv \
-    jq \
-    libnotify-bin \
-    alacritty
+# Check system dependencies
+echo "[1/5] Checking system dependencies..."
+MISSING_PKGS=""
+
+command -v python3 &>/dev/null || MISSING_PKGS="$MISSING_PKGS python3-pip python3-venv"
+command -v jq &>/dev/null || MISSING_PKGS="$MISSING_PKGS jq"
+
+# Check for at least one supported terminal
+if ! command -v alacritty &>/dev/null && ! command -v gnome-terminal &>/dev/null && ! command -v ptyxis &>/dev/null; then
+    echo "  Error: No supported terminal found (alacritty, gnome-terminal, ptyxis)"
+    exit 1
+fi
+
+if [[ -n "$MISSING_PKGS" ]]; then
+    echo "  Installing missing packages:$MISSING_PKGS"
+    sudo apt update
+    sudo apt install -y $MISSING_PKGS
+else
+    echo "  All dependencies installed"
+fi
 
 # Create virtual environment and install tte
 echo "[2/5] Installing Terminal Text Effects (tte)..."
@@ -34,15 +45,18 @@ cp "$SCRIPT_DIR/screensaver-cmd.sh" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/screensaver-launch.sh" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/screensaver-toggle.sh" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/screensaver.conf" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/uninstall.sh" "$INSTALL_DIR/"
 
 chmod +x "$INSTALL_DIR/screensaver-cmd.sh"
 chmod +x "$INSTALL_DIR/screensaver-launch.sh"
 chmod +x "$INSTALL_DIR/screensaver-toggle.sh"
 chmod +x "$INSTALL_DIR/screensaver.conf"
+chmod +x "$INSTALL_DIR/uninstall.sh"
 
 # Create symlinks in ~/.local/bin
 ln -sf "$INSTALL_DIR/screensaver-launch.sh" ~/.local/bin/slimbook-screensaver
 ln -sf "$INSTALL_DIR/screensaver-toggle.sh" ~/.local/bin/slimbook-screensaver-toggle
+ln -sf "$INSTALL_DIR/uninstall.sh" ~/.local/bin/slimbook-screensaver-uninstall
 
 # Create default config if it doesn't exist
 echo "[4/5] Creating configuration..."
@@ -92,6 +106,8 @@ SCREENSAVER_DIR="$HOME/.local/share/slimbook-screensaver"
 # Load configuration
 source "$SCREENSAVER_DIR/screensaver.conf"
 
+log "Idle monitor started (timeout: ${SLIMBOOK_SCREENSAVER_IDLE_TIMEOUT}s)"
+
 while true; do
     # Get idle time in milliseconds from GNOME Mutter
     idle_ms=$(dbus-send --print-reply --dest=org.gnome.Mutter.IdleMonitor \
@@ -103,7 +119,8 @@ while true; do
 
     if [[ $idle_sec -ge $SLIMBOOK_SCREENSAVER_IDLE_TIMEOUT ]]; then
         # Only launch if not already running
-        if ! pgrep -f "slimbook.screensaver" >/dev/null; then
+        if ! pgrep -f "class.*slimbook.screensaver" >/dev/null; then
+            log "Idle timeout reached (${idle_sec}s), launching screensaver"
             "$SCREENSAVER_DIR/screensaver-launch.sh"
         fi
     fi
@@ -151,16 +168,17 @@ fi
 echo ""
 echo "=== Installation complete ==="
 echo ""
-echo "Configuration file: ~/.config/slimbook-screensaver/screensaver.conf"
+echo "Configuration: ~/.config/slimbook-screensaver/screensaver.conf"
+echo "Logs:          ~/.local/state/slimbook-screensaver/screensaver.log"
 echo ""
 echo "Available commands:"
-echo "  slimbook-screensaver        - Launch screensaver manually"
-echo "  slimbook-screensaver-toggle - Enable/disable screensaver"
+echo "  slimbook-screensaver           - Launch screensaver manually"
+echo "  slimbook-screensaver-toggle    - Enable/disable screensaver"
+echo "  slimbook-screensaver-uninstall - Uninstall screensaver"
 echo ""
 echo "Supported terminals: alacritty (default), gnome-terminal, ptyxis"
 echo ""
 echo "The screensaver will automatically activate after idle timeout."
-echo "Edit the config file to customize behavior."
 echo ""
 echo "Restart your session or run manually:"
 echo "  $INSTALL_DIR/idle-monitor.sh &"
