@@ -106,22 +106,32 @@ SCREENSAVER_DIR="$HOME/.local/share/slimbook-screensaver"
 # Load configuration
 source "$SCREENSAVER_DIR/screensaver.conf"
 
+is_session_locked() {
+    gdbus call --session \
+        --dest org.gnome.ScreenSaver \
+        --object-path /org/gnome/ScreenSaver \
+        --method org.gnome.ScreenSaver.GetActive 2>/dev/null | \
+        grep -q 'true'
+}
+
 log "Idle monitor started (timeout: ${SLIMBOOK_SCREENSAVER_IDLE_TIMEOUT}s)"
 
 while true; do
-    # Get idle time in milliseconds from GNOME Mutter
-    idle_ms=$(dbus-send --print-reply --dest=org.gnome.Mutter.IdleMonitor \
-        /org/gnome/Mutter/IdleMonitor/Core \
-        org.gnome.Mutter.IdleMonitor.GetIdletime 2>/dev/null | \
-        grep uint64 | awk '{print $2}')
+    # Skip if session is locked
+    if ! is_session_locked; then
+        # Get idle time in milliseconds from GNOME Mutter
+        idle_ms=$(dbus-send --print-reply --dest=org.gnome.Mutter.IdleMonitor \
+            /org/gnome/Mutter/IdleMonitor/Core \
+            org.gnome.Mutter.IdleMonitor.GetIdletime 2>/dev/null | \
+            grep uint64 | awk '{print $2}')
 
-    idle_sec=$((idle_ms / 1000))
+        idle_sec=$((idle_ms / 1000))
 
-    if [[ $idle_sec -ge $SLIMBOOK_SCREENSAVER_IDLE_TIMEOUT ]]; then
-        # Only launch if not already running
-        if ! pgrep -f "class.*slimbook.screensaver" >/dev/null; then
-            log "Idle timeout reached (${idle_sec}s), launching screensaver"
-            "$SCREENSAVER_DIR/screensaver-launch.sh"
+        if [[ $idle_sec -ge $SLIMBOOK_SCREENSAVER_IDLE_TIMEOUT ]]; then
+            # Only launch if not already running
+            if ! pgrep -f "class.*slimbook.screensaver" >/dev/null; then
+                "$SCREENSAVER_DIR/screensaver-launch.sh"
+            fi
         fi
     fi
 
