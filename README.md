@@ -1,11 +1,11 @@
-# Slimbook EVO Screensaver
+# Terminal Screensaver
 
-![Version](https://img.shields.io/badge/version-0.1.1-blue)
+![Version](https://img.shields.io/badge/version-0.2.0-blue)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 ![Python](https://img.shields.io/badge/python-3.8%2B-yellow)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey)
 
-Terminal-based screensaver with animated ASCII art effects for GNOME desktops. Displays the Slimbook EVO logo with random visual effects powered by [Terminal Text Effects](https://github.com/ChrisBuilds/terminaltexteffects).
+Terminal-based screensaver with animated ASCII art effects for GNOME desktops. Displays customizable ASCII art with random visual effects powered by [Terminal Text Effects](https://github.com/ChrisBuilds/terminaltexteffects).
 
 **Compatibility:** Debian 13+ / Ubuntu 22.04+ with GNOME
 
@@ -13,41 +13,41 @@ Terminal-based screensaver with animated ASCII art effects for GNOME desktops. D
 
 **Quick install:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ajmasia/slimbook-screensaver/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ajmasia/terminal-screensaver/main/scripts/install.sh | bash
 ```
 
 **From source:**
 ```bash
-git clone https://github.com/ajmasia/slimbook-screensaver.git
-cd slimbook-screensaver
-./install.sh
+git clone https://github.com/ajmasia/terminal-screensaver.git
+cd terminal-screensaver
+./scripts/install.sh
 ```
 
 ## Uninstall
 
 ```bash
-slimbook-screensaver-uninstall          # Keep config
-slimbook-screensaver-uninstall --all    # Remove everything
+terminal-screensaver-uninstall          # Keep config
+terminal-screensaver-uninstall --all    # Remove everything
 ```
 
 ## Configuration
 
-Edit `~/.config/slimbook-screensaver/screensaver.conf`:
+Edit `~/.config/terminal-screensaver/screensaver.conf`:
 
 ```bash
 # Terminal: alacritty (default), gnome-terminal, ptyxis
-SLIMBOOK_SCREENSAVER_TERMINAL=alacritty
+TERMINAL_SCREENSAVER_TERMINAL=alacritty
 
 # Idle timeout in seconds (default: 120)
-SLIMBOOK_SCREENSAVER_IDLE_TIMEOUT=120
+TERMINAL_SCREENSAVER_IDLE_TIMEOUT=120
 
 # Animation frame rate (default: 60)
-SLIMBOOK_SCREENSAVER_FRAME_RATE=60
+TERMINAL_SCREENSAVER_FRAME_RATE=60
 ```
 
 ### Custom ASCII Art
 
-Edit `~/.config/slimbook-screensaver/screensaver.txt` with your own text or ASCII art.
+Edit `~/.config/terminal-screensaver/screensaver.txt` with your own text or ASCII art.
 
 **Online generators:**
 - [patorjk.com/software/taag](https://patorjk.com/software/taag/) - Text to ASCII
@@ -60,17 +60,17 @@ Edit `~/.config/slimbook-screensaver/screensaver.txt` with your own text or ASCI
 sudo apt install figlet toilet
 
 # Generate ASCII art
-figlet -f slant "Your Text" > ~/.config/slimbook-screensaver/screensaver.txt
-toilet -f future "Your Text" > ~/.config/slimbook-screensaver/screensaver.txt
+figlet -f slant "Your Text" > ~/.config/terminal-screensaver/screensaver.txt
+toilet -f future "Your Text" > ~/.config/terminal-screensaver/screensaver.txt
 ```
 
 ## Usage
 
 | Command | Description |
 |---------|-------------|
-| `slimbook-screensaver` | Launch manually |
-| `slimbook-screensaver-toggle` | Enable/disable auto-activation |
-| `slimbook-screensaver-uninstall` | Uninstall |
+| `terminal-screensaver` | Launch manually |
+| `terminal-screensaver-toggle` | Enable/disable auto-activation |
+| `terminal-screensaver-uninstall` | Uninstall |
 
 Press any key to exit the screensaver.
 
