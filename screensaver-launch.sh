@@ -5,6 +5,9 @@ SCREENSAVER_DIR="$HOME/.local/share/slimbook-screensaver"
 TTE_BIN="$HOME/.local/bin/tte"
 STATE_FILE="$HOME/.local/state/slimbook-screensaver/screensaver-off"
 
+# Load configuration
+source "$SCREENSAVER_DIR/screensaver.conf"
+
 # Exit if tte is not installed
 if [[ ! -x "$TTE_BIN" ]]; then
     notify-send "Screensaver" "tte not found. Run install.sh first."
@@ -21,24 +24,32 @@ if [[ -f "$STATE_FILE" ]] && [[ "$1" != "force" ]]; then
     exit 1
 fi
 
-# Get list of monitors from GNOME
-monitors=$(gdbus call --session \
-    --dest org.gnome.Mutter.DisplayConfig \
-    --object-path /org/gnome/Mutter/DisplayConfig \
-    --method org.gnome.Mutter.DisplayConfig.GetCurrentState 2>/dev/null | \
-    grep -oP "'\K[^']+(?=')" | head -1 || echo "primary")
-
-# Launch screensaver in kitty fullscreen
-# Using kitty as it's available in Debian repos and supports --class
-kitty \
-    --class=slimbook.screensaver \
-    --title="Slimbook Screensaver" \
-    --override font_size=16 \
-    --override window_padding_width=0 \
-    --override hide_window_decorations=yes \
-    --override background=#000000 \
-    --start-as=fullscreen \
-    -e "$SCREENSAVER_DIR/screensaver-cmd.sh" &
-
-# Alternative: use gnome-terminal if kitty is not available
-# gnome-terminal --full-screen --hide-menubar -- "$SCREENSAVER_DIR/screensaver-cmd.sh"
+# Launch screensaver based on configured terminal
+case "$SLIMBOOK_SCREENSAVER_TERMINAL" in
+    alacritty)
+        alacritty \
+            --class slimbook.screensaver \
+            --title "Slimbook Screensaver" \
+            -o "font.size=$SLIMBOOK_SCREENSAVER_FONT_SIZE" \
+            -o "window.padding.x=0" \
+            -o "window.padding.y=0" \
+            -o 'window.decorations="None"' \
+            -o 'colors.primary.background="#000000"' \
+            -o 'window.startup_mode="Fullscreen"' \
+            -e "$SCREENSAVER_DIR/screensaver-cmd.sh" &
+        ;;
+    gnome-terminal)
+        gnome-terminal \
+            --class=slimbook.screensaver \
+            --title="Slimbook Screensaver" \
+            --full-screen \
+            --hide-menubar \
+            -- "$SCREENSAVER_DIR/screensaver-cmd.sh" &
+        ;;
+    ptyxis)
+        ptyxis \
+            --class=slimbook.screensaver \
+            --title="Slimbook Screensaver" \
+            -- "$SCREENSAVER_DIR/screensaver-cmd.sh" &
+        ;;
+esac
