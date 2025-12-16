@@ -16,6 +16,7 @@ rm -f ~/.config/autostart/slimbook-screensaver-monitor.desktop
 echo "[3/4] Removing symlinks..."
 rm -f ~/.local/bin/slimbook-screensaver
 rm -f ~/.local/bin/slimbook-screensaver-toggle
+rm -f ~/.local/bin/slimbook-screensaver-uninstall
 rm -f ~/.local/bin/tte
 
 # Remove application files
