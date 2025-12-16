@@ -5,24 +5,48 @@ SCREENSAVER_DIR="$HOME/.local/share/slimbook-screensaver"
 TTE_BIN="$HOME/.local/bin/tte"
 STATE_FILE="$HOME/.local/state/slimbook-screensaver/screensaver-off"
 
+# Show help
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: slimbook-screensaver [OPTION]"
+    echo ""
+    echo "Terminal screensaver with ASCII art animations."
+    echo ""
+    echo "Options:"
+    echo "  -f, --force   Launch even if screensaver is disabled"
+    echo "  -h, --help    Show this help message"
+    echo ""
+    echo "Configuration: ~/.config/slimbook-screensaver/screensaver.conf"
+    echo "Logs:          ~/.local/state/slimbook-screensaver/screensaver.log"
+    echo ""
+    echo "Related commands:"
+    echo "  slimbook-screensaver-toggle    Enable/disable screensaver"
+    echo "  slimbook-screensaver-uninstall Uninstall screensaver"
+    exit 0
+fi
+
 # Load configuration
 source "$SCREENSAVER_DIR/screensaver.conf"
 
 # Exit if tte is not installed
 if [[ ! -x "$TTE_BIN" ]]; then
-    notify-send "Screensaver" "tte not found. Run install.sh first."
+    log "ERROR: tte not found at $TTE_BIN"
+    echo "Screensaver: tte not found. Run install.sh first." >&2
     exit 1
 fi
 
 # Exit if screensaver is already running (check for terminal with our class)
 if pgrep -f "class.*slimbook.screensaver" >/dev/null; then
+    log "Screensaver already running, skipping"
     exit 0
 fi
 
 # Check if screensaver is disabled (unless forced)
-if [[ -f "$STATE_FILE" ]] && [[ "$1" != "force" ]]; then
+if [[ -f "$STATE_FILE" ]] && [[ "$1" != "-f" ]] && [[ "$1" != "--force" ]]; then
+    log "Screensaver disabled, skipping"
     exit 1
 fi
+
+log "Launching screensaver with terminal: $SLIMBOOK_SCREENSAVER_TERMINAL"
 
 # Launch screensaver based on configured terminal
 case "$SLIMBOOK_SCREENSAVER_TERMINAL" in
