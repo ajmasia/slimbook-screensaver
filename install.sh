@@ -127,10 +127,31 @@ NoDisplay=true
 X-GNOME-Autostart-enabled=true
 EOF
 
+# Check if ~/.local/bin is in PATH and add if needed
+if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+    echo ""
+    echo "Adding ~/.local/bin to PATH..."
+
+    # Add to .bashrc if it exists and doesn't already have it
+    if [[ -f "$HOME/.bashrc" ]] && ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc"; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+        echo "  Added to ~/.bashrc"
+    fi
+
+    # Add to .profile if it exists and doesn't already have it
+    if [[ -f "$HOME/.profile" ]] && ! grep -q 'PATH="$HOME/.local/bin:$PATH"' "$HOME/.profile"; then
+        echo 'PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.profile"
+        echo "  Added to ~/.profile"
+    fi
+
+    # Export for current session
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+
 echo ""
 echo "=== Installation complete ==="
 echo ""
-echo "Configuration file: ~/.config/slimbook-screensaver/config"
+echo "Configuration file: ~/.config/slimbook-screensaver/screensaver.conf"
 echo ""
 echo "Available commands:"
 echo "  slimbook-screensaver        - Launch screensaver manually"

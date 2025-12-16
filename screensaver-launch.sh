@@ -14,8 +14,8 @@ if [[ ! -x "$TTE_BIN" ]]; then
     exit 1
 fi
 
-# Exit if screensaver is already running
-if pgrep -f "slimbook.screensaver" >/dev/null; then
+# Exit if screensaver is already running (check for terminal with our class)
+if pgrep -f "class.*slimbook.screensaver" >/dev/null; then
     exit 0
 fi
 
