@@ -4,6 +4,9 @@
 SCREENSAVER_DIR="$HOME/.local/share/slimbook-screensaver"
 TTE_BIN="$HOME/.local/bin/tte"
 
+# Load configuration
+source "$SCREENSAVER_DIR/screensaver.conf"
+
 screensaver_in_focus() {
     # Check if screensaver window is active in GNOME
     active_window=$(gdbus call --session \
@@ -28,15 +31,15 @@ trap exit_screensaver SIGINT SIGTERM SIGHUP SIGQUIT
 printf '\033]11;rgb:00/00/00\007'
 
 while true; do
-    "$TTE_BIN" -i "$SCREENSAVER_DIR/screensaver.txt" \
-        --frame-rate 60 \
+    "$TTE_BIN" -i "$SLIMBOOK_SCREENSAVER_ASCII_FILE" \
+        --frame-rate "$SLIMBOOK_SCREENSAVER_FRAME_RATE" \
         --canvas-width 0 \
         --canvas-height 0 \
         --reuse-canvas \
         --anchor-canvas c \
         --anchor-text c \
         --random-effect \
-        --exclude-effects dev_worm \
+        --exclude-effects "$SLIMBOOK_SCREENSAVER_EXCLUDE_EFFECTS" \
         --no-eol \
         --no-restore-cursor &
 
