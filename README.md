@@ -9,6 +9,10 @@ Terminal-based screensaver with animated ASCII art effects for GNOME desktops. D
 
 **Compatibility:** Debian 13+ / Ubuntu 22.04+ with GNOME
 
+## Demo
+
+<video src="demo_terminal-screensaver.mp4" controls width="100%"></video>
+
 ## Installation
 
 **Quick install:**
