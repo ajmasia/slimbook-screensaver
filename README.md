@@ -11,7 +11,7 @@ Terminal-based screensaver with animated ASCII art effects for GNOME desktops. D
 
 ## Demo
 
-<video src="demo_terminal-screensaver.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/771f8253-1c31-47d1-9825-8acc2cb5e593
 
 ## Installation
 
