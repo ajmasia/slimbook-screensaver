@@ -25,6 +25,7 @@ check_installation() {
     [[ -d "$INSTALL_DIR" ]] && installed=true
     [[ -L ~/.local/bin/terminal-screensaver ]] && installed=true
     [[ -f ~/.config/autostart/terminal-screensaver-monitor.desktop ]] && installed=true
+    [[ -f ~/.config/autostart/terminal-screensaver-indicator.desktop ]] && installed=true
 
     if [[ "$installed" == "false" ]]; then
         echo "Terminal Screensaver is not installed."
@@ -59,16 +60,15 @@ check_installation
 
 echo "=== Uninstalling Terminal Screensaver ==="
 
-# Stop idle monitor if running
+# Stop running processes
 echo "[1/5] Stopping running processes..."
+pkill -f "screensaver-indicator.py" 2>/dev/null || true
 pkill -f "idle-monitor.sh" 2>/dev/null || true
-# Kill screensaver window (by window class, not by script name to avoid killing ourselves)
-pkill -f "class.*terminal\.screensaver" 2>/dev/null || true
-# Kill multimonitor screensaver if running
 pkill -f "screensaver-multimonitor.py" 2>/dev/null || true
 
 # Remove autostart
-echo "[2/5] Removing autostart entry..."
+echo "[2/5] Removing autostart entries..."
+rm -f ~/.config/autostart/terminal-screensaver-indicator.desktop
 rm -f ~/.config/autostart/terminal-screensaver-monitor.desktop
 
 # Remove symlinks
