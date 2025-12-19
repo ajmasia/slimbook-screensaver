@@ -15,9 +15,17 @@ https://github.com/user-attachments/assets/771f8253-1c31-47d1-9825-8acc2cb5e593
 
 ## Installation
 
-**Quick install:**
+**Quick install (latest):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ajmasia/terminal-screensaver/main/scripts/install.sh | bash
+```
+
+**Install specific version:**
+```bash
+# Pattern: https://raw.githubusercontent.com/ajmasia/terminal-screensaver/{version}/scripts/install.sh
+
+# Example: install v0.5.0
+curl -fsSL https://raw.githubusercontent.com/ajmasia/terminal-screensaver/v0.5.0/scripts/install.sh | bash
 ```
 
 **From source:**
@@ -86,7 +94,21 @@ figlet -f slant "Your Text" > ~/.config/terminal-screensaver/banner.txt
 toilet -f future "Your Text" > ~/.config/terminal-screensaver/banner.txt
 ```
 
+## System Tray Indicator
+
+A system tray icon is included for easy control:
+
+- **Status display**: Shows if screensaver is enabled/disabled
+- **Quick toggle**: Enable or disable with one click
+- **Launch now**: Test the screensaver instantly
+- **Timeout selection**: Change idle timeout (30s to 10min)
+- **Update notifications**: Automatic daily check for new versions
+
+The indicator starts automatically on login.
+
 ## Usage
+
+### Command Line
 
 | Command | Description |
 |---------|-------------|
@@ -95,6 +117,10 @@ toilet -f future "Your Text" > ~/.config/terminal-screensaver/banner.txt
 | `terminal-screensaver-toggle` | Enable/disable auto-activation |
 | `terminal-screensaver-update` | Update to latest version |
 | `terminal-screensaver-uninstall` | Uninstall |
+
+### System Tray
+
+Right-click the tray icon for all options. The indicator and CLI commands are fully compatible - changes from one are reflected in the other.
 
 Press any key or move the mouse to exit the screensaver.
 
@@ -112,6 +138,7 @@ terminal-screensaver-update --force   # Force reinstall current version
 
 - Python 3.8+
 - GTK4 with VTE (`gir1.2-vte-3.91`)
+- AppIndicator (`gir1.2-ayatanaappindicator3-0.1`)
 - `jq`, `curl`, `libnotify-bin`
 
 ## Contributing
@@ -125,6 +152,7 @@ For release process, see [RELEASING.md](.github/RELEASING.md).
 Inspired by the screensaver from [Omarchy](https://github.com/basecamp/omarchy) by David Heinemeier Hansson (DHH) and Basecamp (MIT License).
 
 Adapted for Debian/Ubuntu + GNOME with:
-- GNOME Mutter D-Bus idle detection (replacing hypridle)
+- System tray indicator for easy control
+- GNOME Mutter D-Bus idle detection
 - Multimonitor support via GTK4/VTE
-- Standalone installation
+- Automatic update notifications
