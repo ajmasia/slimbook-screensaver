@@ -10,6 +10,7 @@ import subprocess
 import signal
 import json
 import urllib.request
+import fcntl
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('AyatanaAppIndicator3', '0.1')
@@ -342,10 +343,65 @@ class ScreensaverIndicator:
         Gtk.main()
 
 
+LOCK_FILE = os.path.join(STATE_DIR, "indicator.lock")
+lock_fd = None
+
+
+def acquire_lock():
+    """Try to acquire lock file using flock. Returns True if successful."""
+    global lock_fd
+    try:
+        os.makedirs(STATE_DIR, exist_ok=True)
+        lock_fd = open(LOCK_FILE, 'w')
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_fd.write(str(os.getpid()))
+        lock_fd.flush()
+        return True
+    except (IOError, OSError):
+        if lock_fd:
+            lock_fd.close()
+            lock_fd = None
+        return False
+
+
+def release_lock():
+    """Release lock file."""
+    global lock_fd
+    try:
+        if lock_fd:
+            fcntl.flock(lock_fd, fcntl.LOCK_UN)
+            lock_fd.close()
+            lock_fd = None
+        if os.path.exists(LOCK_FILE):
+            os.remove(LOCK_FILE)
+    except Exception:
+        pass
+
+
+def notify(message):
+    """Show desktop notification."""
+    try:
+        subprocess.run(
+            ["notify-send", "Terminal Screensaver", message],
+            capture_output=True
+        )
+    except Exception:
+        pass
+
+
 def main():
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    indicator = ScreensaverIndicator()
-    indicator.run()
+
+    # Try to acquire lock
+    if not acquire_lock():
+        notify("Already running")
+        return
+
+    try:
+        indicator = ScreensaverIndicator()
+        indicator.run()
+    finally:
+        release_lock()
 
 
 if __name__ == "__main__":
