@@ -66,10 +66,13 @@ pkill -f "screensaver-indicator.py" 2>/dev/null || true
 pkill -f "idle-monitor.sh" 2>/dev/null || true
 pkill -f "screensaver-multimonitor.py" 2>/dev/null || true
 
-# Remove autostart
-echo "[2/5] Removing autostart entries..."
+# Remove desktop integration
+echo "[2/5] Removing desktop integration..."
 rm -f ~/.config/autostart/terminal-screensaver-indicator.desktop
 rm -f ~/.config/autostart/terminal-screensaver-monitor.desktop
+rm -f ~/.local/share/applications/terminal-screensaver.desktop
+rm -f ~/.local/share/icons/hicolor/scalable/apps/terminal-screensaver.svg
+gtk-update-icon-cache ~/.local/share/icons/hicolor/ 2>/dev/null || true
 
 # Remove symlinks
 echo "[3/5] Removing symlinks..."

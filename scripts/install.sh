@@ -179,14 +179,24 @@ create_config() {
 configure_gnome() {
     echo "[5/5] Configuring GNOME integration..."
 
+    # Install application icon
+    mkdir -p ~/.local/share/icons/hicolor/scalable/apps
+    cp "$REPO_ROOT/assets/icons/terminal-screensaver.svg" ~/.local/share/icons/hicolor/scalable/apps/
+    gtk-update-icon-cache ~/.local/share/icons/hicolor/ 2>/dev/null || true
+
+    # Install .desktop file for application menu
+    mkdir -p ~/.local/share/applications
+    cp "$REPO_ROOT/assets/terminal-screensaver.desktop" ~/.local/share/applications/
+
     # Create autostart entry for indicator
     mkdir -p ~/.config/autostart
-    cat > ~/.config/autostart/terminal-screensaver-indicator.desktop << EOF
+    cat > ~/.config/autostart/terminal-screensaver-indicator.desktop << 'EOF'
 [Desktop Entry]
 Type=Application
-Name=Terminal Screensaver
+Name=Screensaver
 Comment=System tray indicator for terminal screensaver
-Exec=python3 $INSTALL_DIR/screensaver-indicator.py
+Exec=sh -c 'exec python3 $HOME/.local/share/terminal-screensaver/screensaver-indicator.py'
+Icon=terminal-screensaver
 Hidden=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
