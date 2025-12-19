@@ -14,6 +14,7 @@ SRC_FILES=(
     "src/screensaver-update.sh"
     "src/screensaver.conf"
     "src/screensaver-multimonitor.py"
+    "src/screensaver-indicator.py"
 )
 
 show_help() {
@@ -104,6 +105,11 @@ check_dependencies() {
         MISSING_PKGS="$MISSING_PKGS gir1.2-vte-3.91"
     fi
 
+    # Check for AyatanaAppIndicator3 (needed for system tray)
+    if ! python3 -c "import gi; gi.require_version('AyatanaAppIndicator3', '0.1')" 2>/dev/null; then
+        MISSING_PKGS="$MISSING_PKGS gir1.2-ayatanaappindicator3-0.1"
+    fi
+
     if [[ -n "$MISSING_PKGS" ]]; then
         echo "  Installing missing packages:$MISSING_PKGS"
         sudo apt update
@@ -173,63 +179,21 @@ create_config() {
 configure_gnome() {
     echo "[5/5] Configuring GNOME integration..."
 
-    # Create idle monitor script
-    cat > "$INSTALL_DIR/idle-monitor.sh" << 'IDLE_EOF'
-#!/bin/bash
-# Idle monitor for GNOME - launches screensaver after inactivity
-
-SCREENSAVER_DIR="$HOME/.local/share/terminal-screensaver"
-
-# Load configuration
-source "$SCREENSAVER_DIR/screensaver.conf"
-
-is_session_locked() {
-    gdbus call --session \
-        --dest org.gnome.ScreenSaver \
-        --object-path /org/gnome/ScreenSaver \
-        --method org.gnome.ScreenSaver.GetActive 2>/dev/null | \
-        grep -q 'true'
-}
-
-log "Idle monitor started (timeout: ${TERMINAL_SCREENSAVER_IDLE_TIMEOUT}s)"
-
-while true; do
-    # Skip if session is locked
-    if ! is_session_locked; then
-        # Get idle time in milliseconds from GNOME Mutter
-        idle_ms=$(dbus-send --print-reply --dest=org.gnome.Mutter.IdleMonitor \
-            /org/gnome/Mutter/IdleMonitor/Core \
-            org.gnome.Mutter.IdleMonitor.GetIdletime 2>/dev/null | \
-            grep uint64 | awk '{print $2}')
-
-        idle_sec=$((idle_ms / 1000))
-
-        if [[ $idle_sec -ge $TERMINAL_SCREENSAVER_IDLE_TIMEOUT ]]; then
-            # Only launch if not already running
-            if ! pgrep -f "class.*terminal.screensaver" >/dev/null; then
-                "$SCREENSAVER_DIR/screensaver-launch.sh"
-            fi
-        fi
-    fi
-
-    sleep 5
-done
-IDLE_EOF
-
-    chmod +x "$INSTALL_DIR/idle-monitor.sh"
-
-    # Create autostart entry for GNOME
+    # Create autostart entry for indicator
     mkdir -p ~/.config/autostart
-    cat > ~/.config/autostart/terminal-screensaver-monitor.desktop << EOF
+    cat > ~/.config/autostart/terminal-screensaver-indicator.desktop << EOF
 [Desktop Entry]
 Type=Application
-Name=Terminal Screensaver Monitor
-Comment=Launches screensaver after idle timeout
-Exec=$INSTALL_DIR/idle-monitor.sh
+Name=Terminal Screensaver
+Comment=System tray indicator for terminal screensaver
+Exec=python3 $INSTALL_DIR/screensaver-indicator.py
 Hidden=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
 EOF
+
+    # Remove old autostart entry if exists
+    rm -f ~/.config/autostart/terminal-screensaver-monitor.desktop
 }
 
 setup_path() {
@@ -259,17 +223,17 @@ show_complete() {
     echo "=== Installation complete (v$version) ==="
     echo ""
     echo "Configuration: ~/.config/terminal-screensaver/screensaver.conf"
-    echo "Logs:          ~/.local/state/terminal-screensaver/screensaver.log"
     echo ""
     echo "Available commands:"
     echo "  terminal-screensaver           - Launch screensaver manually"
     echo "  terminal-screensaver-toggle    - Enable/disable screensaver"
     echo "  terminal-screensaver-uninstall - Uninstall screensaver"
     echo ""
-    echo "The screensaver will automatically activate after idle timeout."
+    echo "A system tray indicator will start automatically on login."
+    echo "Use it to control timeout, enable/disable, and launch manually."
     echo ""
-    echo "Restart your session or run manually:"
-    echo "  $INSTALL_DIR/idle-monitor.sh &"
+    echo "To start it now:"
+    echo "  python3 $INSTALL_DIR/screensaver-indicator.py &"
 }
 
 # Parse arguments
