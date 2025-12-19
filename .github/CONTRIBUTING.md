@@ -25,7 +25,10 @@ Thanks for your interest in contributing to Terminal Screensaver!
 Install dependencies for local development:
 
 ```bash
-# Create virtual environment
+# Install GTK4 VTE bindings
+sudo apt install gir1.2-vte-3.91
+
+# Create virtual environment for tte
 python3 -m venv .venv
 .venv/bin/pip install terminaltexteffects
 
@@ -46,7 +49,7 @@ terminal-screensaver/
 ## Guidelines
 
 - **Commits**: Write clear, descriptive commit messages
-- **Code style**: Follow existing bash script conventions
+- **Code style**: Follow existing conventions (bash for scripts, Python for GTK/VTE)
 - **Testing**: Test changes locally before submitting PR
 - **Documentation**: Update README if adding features
 
@@ -59,7 +62,7 @@ terminal-screensaver/
 ## Reporting issues
 
 - Check existing issues first
-- Include system info (distro, GNOME version, terminal)
+- Include system info (distro, GNOME version)
 - Add steps to reproduce
 
 ## Questions?

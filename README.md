@@ -30,8 +30,8 @@ cd terminal-screensaver
 ## Uninstall
 
 ```bash
-terminal-screensaver-uninstall          # Keep config
-terminal-screensaver-uninstall --all    # Remove everything
+terminal-screensaver-uninstall          # Interactive (asks about config)
+terminal-screensaver-uninstall --all    # Remove everything without asking
 ```
 
 ## Configuration
@@ -39,8 +39,8 @@ terminal-screensaver-uninstall --all    # Remove everything
 Edit `~/.config/terminal-screensaver/screensaver.conf`:
 
 ```bash
-# Terminal: alacritty (default), gnome-terminal, ptyxis
-TERMINAL_SCREENSAVER_TERMINAL=alacritty
+# Path to banner file
+TERMINAL_SCREENSAVER_ASCII_FILE=$HOME/.config/terminal-screensaver/banner.txt
 
 # Idle timeout in seconds (default: 120)
 TERMINAL_SCREENSAVER_IDLE_TIMEOUT=120
@@ -96,7 +96,7 @@ toilet -f future "Your Text" > ~/.config/terminal-screensaver/banner.txt
 | `terminal-screensaver-update` | Update to latest version |
 | `terminal-screensaver-uninstall` | Uninstall |
 
-Press any key to exit the screensaver.
+Press any key or move the mouse to exit the screensaver.
 
 ## Update
 
@@ -111,7 +111,7 @@ terminal-screensaver-update --force   # Force reinstall current version
 ## Dependencies
 
 - Python 3.8+
-- Terminal: `alacritty`, `gnome-terminal`, or `ptyxis`
+- GTK4 with VTE (`gir1.2-vte-3.91`)
 - `jq`, `curl`
 
 ## Contributing
@@ -126,5 +126,5 @@ Inspired by the screensaver from [Omarchy](https://github.com/basecamp/omarchy) 
 
 Adapted for Debian/Ubuntu + GNOME with:
 - GNOME Mutter D-Bus idle detection (replacing hypridle)
-- Multi-terminal support
+- Multimonitor support via GTK4/VTE
 - Standalone installation
